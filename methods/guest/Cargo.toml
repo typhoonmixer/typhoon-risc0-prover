@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "is-even"
-path = "src/bin/is_even.rs"
+name = "typhoon-prover"
+path = "src/bin/typhoon_prover.rs"
 
 [workspace]
 
@@ -13,6 +13,8 @@ path = "src/bin/is_even.rs"
 alloy-primitives = { version = "0.8", default-features = false, features = ["rlp", "serde", "std"] }
 alloy-sol-types = { version = "0.8" }
 risc0-zkvm = { version = "1.2", default-features = false, features = ['std'] }
+num-bigint = "0.4.6"
+sha2 = "0.10.8"
 
 [profile.release]
 lto = "thin"
