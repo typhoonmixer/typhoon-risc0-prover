@@ -13,29 +13,6 @@ use guests::merkle_tree;
 use guests::block_verifier;
 use std::hash::{BuildHasher, Hasher, RandomState};
 
-
-//  original types
-//     roots: Vec<String>,
-//     nullifiersHashs: Vec<String>,
-//     days: Vec<u128>,
-//     recipient: String,
-//     relayer: String,
-//     relayerFee: String,
-//     nullifiers: Vec<String>,
-//     secrets: Vec<String>,
-//     pathElements: Vec<Vec<String>>,
-//     pathIndices: Vec<Vec<u8>>,
-//     changeLeaf: String,
-//     changeSecret: String,
-//     changeNullifier: String,
-//     balances: Vec<String>,
-//     change: String,
-//     amountOut: String,
-//     previousBlockHash: String,
-//     nextTreeRootsHashs: Vec<String>,
-//     blocksIndex: Vec<usize>,
-//     blockRootTrees: Vec<Vec<String>>,
-//     finalBlockHash: String,
 alloy_sol_types::sol! {
     struct Input {
         string[] roots;
@@ -148,12 +125,11 @@ fn main() {
         }
     }
     shuffle(&mut hiddenNullifiers);
-    let mut output: Vec<U256> = [U256::from_str(&input.recipient).unwrap(), U256::from_str(&input.relayer).unwrap(), U256::from_str(&input.relayerFee).unwrap(), U256::from_str(&input.amountOut).unwrap(), U256::from_str(&input.changeLeaf).unwrap()].to_vec();
+    let mut output: Vec<U256> = [U256::from_str(&input.recipient).unwrap(), U256::from_str(&input.relayer).unwrap(), U256::from_str(&input.relayerFee).unwrap(), U256::from_str(&input.amountOut).unwrap(), U256::from_str(&input.changeLeaf).unwrap(), U256::from_str(&input.finalBlockHash).unwrap()].to_vec();
     let out = Output { publicInputs : [output, hiddenNullifiers].concat()};
     
     //output = [output, hiddenNullifiers].concat();
     env::commit_slice(&out.abi_encode());
-    
 
 }
 
