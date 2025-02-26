@@ -1,7 +1,7 @@
 
 use std::str::FromStr;
 
-use num_bigint::BigUint;
+use alloy_primitives::U256;
 
 const p: &str = "21888242871839275222246405745257275088548364400416034343698204186575808495617";
 
@@ -29,9 +29,9 @@ const c: [&str; 20] = [
     ];
 
 
-pub fn MiMC5Sponge(_ins: [BigUint; 2], _k: BigUint) -> BigUint{
-    let mut lastR: BigUint = BigUint::from_str("0").unwrap();
-    let mut lastC: BigUint = BigUint::from_str("0").unwrap();
+pub fn MiMC5Sponge(_ins: [U256; 2], _k: U256) -> U256{
+    let mut lastR: U256 = U256::from_str("0").unwrap();
+    let mut lastC: U256 = U256::from_str("0").unwrap();
     
     for i in 0.._ins.len(){
         lastR = addmod(&lastR, &_ins[i]);
@@ -42,19 +42,19 @@ pub fn MiMC5Sponge(_ins: [BigUint; 2], _k: BigUint) -> BigUint{
     return lastR;
 }
 
-fn MiMC5Feistel(_iL: &BigUint, _iR: &BigUint, _k: &BigUint) -> (BigUint, BigUint){
+fn MiMC5Feistel(_iL: &U256, _iR: &U256, _k: &U256) -> (U256, U256){
     let nRounds: usize = 20;
     let mut lastL = _iL.clone();
     let mut lastR = _iR.clone();
-    let mut mask: BigUint = BigUint::from_str("0").unwrap();
-    let mut mask2: BigUint = BigUint::from_str("0").unwrap();
-    let mut mask4: BigUint = BigUint::from_str("0").unwrap();
-    let mut temp: BigUint = BigUint::from_str("0").unwrap();
+    let mut mask: U256 = U256::from_str("0").unwrap();
+    let mut mask2: U256 = U256::from_str("0").unwrap();
+    let mut mask4: U256 = U256::from_str("0").unwrap();
+    let mut temp: U256 = U256::from_str("0").unwrap();
 
     for i in 0..nRounds{
         
         mask = addmod(&lastR, _k);
-        mask = addmod(&mask, &BigUint::from_str(c[i]).unwrap());
+        mask = addmod(&mask, &U256::from_str(c[i]).unwrap());
         mask2 = mulmod(&mask, &mask);
         mask4 = mulmod(&mask2, &mask2);
         mask = mulmod(&mask4, &mask);
@@ -66,12 +66,12 @@ fn MiMC5Feistel(_iL: &BigUint, _iR: &BigUint, _k: &BigUint) -> (BigUint, BigUint
     return (lastL,lastR);
 }
 
-fn mulmod(a: &BigUint, b: &BigUint) -> BigUint{
-    let pbn = BigUint::from_str(p).unwrap();
+fn mulmod(a: &U256, b: &U256) -> U256{
+    let pbn = U256::from_str(p).unwrap();
     return (a.clone() * b.clone()) % pbn;
 }
 
-fn addmod(x: &BigUint,y: &BigUint) -> BigUint{
-    let pbn = BigUint::from_str(p).unwrap();
+fn addmod(x: &U256,y: &U256) -> U256{
+    let pbn = U256::from_str(p).unwrap();
     return (x.clone() + y.clone()) % pbn;
 }

@@ -1,6 +1,7 @@
 use std::io::Read;
 
 use alloy_sol_types::SolValue;
+use alloy_primitives::U256;
 use risc0_zkvm::guest::env;
 use sha2::{Sha256, Digest};
 
@@ -60,6 +61,10 @@ alloy_sol_types::sol! {
         string finalBlockHash;
     }
 
+    struct Output {
+        uint256[] publicInputs;
+    }
+
 }
 
 fn main() {
@@ -87,25 +92,25 @@ fn main() {
             panic!("Invalid nullifierHash")
         }
         let leafHash = mimc5Sponge::MiMC5Sponge(
-            [commitmentHash, BigUint::from_str(&input.balances[i].clone()).unwrap()],
-            BigUint::from_str("0").unwrap(),
+            [U256::from_str(&commitmentHash.to_string()).unwrap(), U256::from_str(&input.balances[i].clone()).unwrap()],
+            U256::from_str("0").unwrap(),
         );
         merkle_tree::merkleTreeChecker(
             10_usize,
             leafHash,
-            BigUint::from_str(&input.roots[i].clone()).unwrap(),
+            U256::from_str(&input.roots[i].clone()).unwrap(),
             input.days[i].parse::<u128>().unwrap(),
-            input.pathElements[i].iter().map(|e| BigUint::from_str(e).unwrap()).collect(),
+            input.pathElements[i].iter().map(|e| U256::from_str(e).unwrap()).collect(),
             input.pathIndices[i].iter().map(|e| e.parse::<u8>().unwrap()).collect(),
         );
     }
 
     block_verifier::verifier(
-        input.roots.iter().map(|e| BigUint::from_str(e).unwrap()).collect(),
-        BigUint::from_str(&input.previousBlockHash).unwrap(),
-        input.nextTreeRootsHashs.iter().map(|e| BigUint::from_str(e).unwrap()).collect(),
-        input.blockRootTrees.iter().map(|e| e.iter().map(|f| BigUint::from_str(f).unwrap()).collect()).collect(),
-        BigUint::from_str(&input.finalBlockHash).unwrap(),
+        input.roots.iter().map(|e| U256::from_str(e).unwrap()).collect(),
+        U256::from_str(&input.previousBlockHash).unwrap(),
+        input.nextTreeRootsHashs.iter().map(|e| U256::from_str(e).unwrap()).collect(),
+        input.blockRootTrees.iter().map(|e| e.iter().map(|f| U256::from_str(f).unwrap()).collect()).collect(),
+        U256::from_str(&input.finalBlockHash).unwrap(),
         &mut input.blocksIndex.iter().map(|e| e.parse::<usize>().unwrap()).collect(),
     );
 
@@ -120,29 +125,34 @@ fn main() {
     }
 
     let (changeCommitment, _) = commitment_hasher::commitment_hash(BigUint::from_str(&input.changeSecret.clone()).unwrap(), BigUint::from_str(&input.changeNullifier.clone()).unwrap());
-    let finalLeaf = mimc5Sponge::MiMC5Sponge([changeCommitment, BigUint::from_str(&input.change.clone()).unwrap()], BigUint::from_str("0").unwrap());
+    let finalLeaf = mimc5Sponge::MiMC5Sponge([U256::from_str(&changeCommitment.to_string()).unwrap(), U256::from_str(&input.change.clone()).unwrap()], U256::from_str("0").unwrap());
 
-    if finalLeaf != BigUint::from_str(&input.changeLeaf.clone()).unwrap() {
+    if finalLeaf != U256::from_str(&input.changeLeaf.clone()).unwrap() {
         panic!("Invalid change leaf!")
     }
 
 
     // add fake nullifiers to hide the real nullifiers and the number of real nullifiers
-    let mut hiddenNullifiers: Vec<BigUint> = Vec::new();
+    let mut hiddenNullifiers: Vec<U256> = Vec::new();
     for i in 0..input.nullifierHashs.len() {
         let random_int: usize = input.blocksIndex[i].parse::<usize>().unwrap() % 10;
-        hiddenNullifiers.push(BigUint::from_str(&input.nullifierHashs[i].clone()).unwrap());
-        let mut new_nullifier = BigUint::from_str(&input.nullifierHashs[i].clone()).unwrap();
+        hiddenNullifiers.push(U256::from_str(&input.nullifierHashs[i].clone()).unwrap());
+        let mut new_nullifier = U256::from_str(&input.nullifierHashs[i].clone()).unwrap();
         for j in 0..random_int {
             let mut chasher = Sha256::new();
 
             chasher.update(new_nullifier.to_string());
-            new_nullifier = BigUint::from_bytes_le(&chasher.finalize());
+            let aux_new_nullifier = BigUint::from_bytes_le(&chasher.finalize());
+            new_nullifier = U256::from_str(&aux_new_nullifier.to_string()).unwrap();
             hiddenNullifiers.push(new_nullifier.clone());
         }
     }
     shuffle(&mut hiddenNullifiers);
-
+    let mut output: Vec<U256> = [U256::from_str(&input.recipient).unwrap(), U256::from_str(&input.relayer).unwrap(), U256::from_str(&input.relayerFee).unwrap(), U256::from_str(&input.amountOut).unwrap(), U256::from_str(&input.changeLeaf).unwrap()].to_vec();
+    let out = Output { publicInputs : [output, hiddenNullifiers].concat()};
+    
+    //output = [output, hiddenNullifiers].concat();
+    env::commit_slice(&out.abi_encode());
     
 
 }

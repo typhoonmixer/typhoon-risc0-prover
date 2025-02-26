@@ -2,14 +2,14 @@ use std::str::FromStr;
 
 use crate::mimc5Sponge::MiMC5Sponge;
 
-use num_bigint::BigUint;
+use alloy_primitives::U256;
 
 
-pub fn merkleTreeChecker(levels: usize, leaf: BigUint, root: BigUint, day: u128, pathElements: Vec<BigUint>, pathIndices: Vec<u8>){
-    let leafHash = MiMC5Sponge([leaf, day.into()], BigUint::from_str("0").unwrap());
-    let mut hash: BigUint = BigUint::from_str("0").unwrap();
+pub fn merkleTreeChecker(levels: usize, leaf: U256, root: U256, day: u128, pathElements: Vec<U256>, pathIndices: Vec<u8>){
+    let leafHash = MiMC5Sponge([leaf, U256::from(day)], U256::from_str("0").unwrap());
+    let mut hash: U256 = U256::from_str("0").unwrap();
     for i in 0..levels{
-        let mut selectors: [BigUint; 2];
+        let mut selectors: [U256; 2];
         if(i == 0){
             selectors = dualMux([leafHash.clone(), pathElements[i].clone()], pathIndices[i]);
         } else {
@@ -23,7 +23,7 @@ pub fn merkleTreeChecker(levels: usize, leaf: BigUint, root: BigUint, day: u128,
     }
 }
 
-fn dualMux(ins: [BigUint; 2], s: u8,) -> [BigUint; 2]{
+fn dualMux(ins: [U256; 2], s: u8,) -> [U256; 2]{
     if(s == 0){
         return ins;
     } else if(s == 1){
@@ -33,9 +33,9 @@ fn dualMux(ins: [BigUint; 2], s: u8,) -> [BigUint; 2]{
     }
 }
 
-fn hashLeftRight(left: BigUint, right: BigUint) -> BigUint{
+fn hashLeftRight(left: U256, right: U256) -> U256{
     
-    return MiMC5Sponge([left, right], BigUint::from_str("0").unwrap());
+    return MiMC5Sponge([left, right], U256::from_str("0").unwrap());
 }
 
 
